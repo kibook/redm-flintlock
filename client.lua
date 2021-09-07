@@ -115,3 +115,7 @@ AddEventHandler("onResourceStop", function(resourceName)
                 deleteFlintlock(flintlock)
         end
 end)
+
+Citizen.CreateThread(function()
+        TriggerEvent("chat:addSuggestion", "/flintlock", "Equip a flintlock pistol")
+end)
