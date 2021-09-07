@@ -1,5 +1,9 @@
-local position = vector3(0.11, 0, 0.015)
-local rotation = vector3(0, 0, 0)
+
+local config = {
+        position = vector3(0.11, 0, 0.015),
+        rotation = vector3(0, 0, 0),
+        model = `s_antiquerevolver01x`
+}
 
 local flintlock
 
@@ -29,14 +33,55 @@ local function dirtyWeapon(weapon)
         Citizen.InvokeNative(0xE22060121602493B, weapon, 1.0)
 end
 
+local function loadModel(model)
+        if not IsModelInCdimage(model) then
+                return false
+        end
+
+        RequestModel(model)
+
+        while not HasModelLoaded(model) do
+                Citizen.Wait(0)
+        end
+
+        return true
+end
+
+local function giveWeaponToPed(ped)
+        GiveWeaponToPed(ped, `WEAPON_PISTOL_VOLCANIC`, 100, true, false, 0, true, 0.0, 0.0, 0, true, 0.0, false)
+
+        local timeout = GetGameTimer() + 1000
+        local weapon
+
+        while not weapon and GetGameTimer() < timeout do
+                weapon = GetPedCurrentWeaponEntityIndex(ped, 0)
+                Citizen.Wait(0)
+        end
+
+        return weapon
+end
+
 local function createFlintlock()
         local playerPed = PlayerPedId()
-        GiveWeaponToPed(playerPed, `WEAPON_PISTOL_VOLCANIC`, 100, true, false, 0, true, 0.0, 0.0, 0, true, 0.0, false)
-        local weapon = GetPedCurrentWeaponEntityIndex(playerPed, 0)
+
+        local weapon = giveWeaponToPed(playerPed)
+
+        if not weapon then
+                return
+        end
+
+        if not loadModel(config.model) then
+                return
+        end
+
         SetEntityAlpha(weapon, 0)
         dirtyWeapon(weapon)
-        local flintlock = CreateObject(`s_antiquerevolver01x`, 0.0, 0.0, 0.0, true, true, false)
-        AttachEntityToEntity(flintlock, weapon, 0, position, rotation, false, false, false, false, 0, true, false, false)
+
+        local flintlock = CreateObject(config.model, 0.0, 0.0, 0.0, true, true, false)
+        SetModelAsNoLongerNeeded(config.model)
+
+        AttachEntityToEntity(flintlock, weapon, 0, config.position, config.rotation, false, false, false, false, 0, true, false, false)
+
         return flintlock
 end
 
